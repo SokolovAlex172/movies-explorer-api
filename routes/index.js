@@ -10,13 +10,10 @@ const NotFound = require('../errors/not-found');
 router.post('/signin', validateSignIn(), login);
 router.post('/signup', validateSignUp(), createUser);
 
-router.use(auth);
 router.use('/users', userRouter);
 router.use('/movies', movieRouter);
 
-router.use(auth, userRouter);
-router.use(auth, movieRouter);
-
+router.use(auth);
 router.use('*', (req, res, next) => {
   next(new NotFound('Запрашиваемая страница не существует'));
 });

@@ -1,18 +1,16 @@
 /* eslint-disable linebreak-style */
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const cors = require('cors');
-const NotFound = require('./errors/not-found');
+const { limiter } = require('./middlewares/limiter');
+const { PORT, DB_ADDRESS } = require('./utils/config');
 
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const app = express();
-const { PORT = 3000 } = process.env;
-
 const routes = require('./routes');
 const errorHandler = require('./middlewares/error-handler');
 
@@ -33,14 +31,17 @@ const corsOptions = {
   credentials: true,
 };
 
-mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb');
+mongoose.connect(DB_ADDRESS);
 
 app.use(helmet());
+
+app.use(cors(corsOptions));
+
 app.use(bodyParser.json());
 
 app.use(requestLogger);
 
-app.use(cors(corsOptions));
+app.use(limiter);
 
 app.get('/crash-test', () => {
   setTimeout(() => {
@@ -50,12 +51,7 @@ app.get('/crash-test', () => {
 
 app.use('/', routes);
 
-app.use((req, res, next) => {
-  next(new NotFound('Маршрут не найден'));
-});
-
 app.use(errorLogger);
-
 app.use(errors());
 app.use(errorHandler);
 
