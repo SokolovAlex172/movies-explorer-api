@@ -37,7 +37,7 @@ const createUser = (req, res, next) => {
         return;
       }
       if (error instanceof mongooseError.ValidationError) {
-        next(new BadRequest('Некорректные данные'));
+        next(new BadRequest('Переданы некорректные данные'));
         return;
       }
       next(error);

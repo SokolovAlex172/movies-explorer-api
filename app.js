@@ -3,23 +3,24 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const cors = require('cors');
+const helmet = require('helmet');
 const { errors } = require('celebrate');
-const errorHandler = require('./middlewares/error-handler');
+const cors = require('cors');
+const NotFound = require('./errors/not-found');
+
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const routes = require('./routes');
 
-const { PORT = 3000 } = process.env;
 const app = express();
+const { PORT = 3000 } = process.env;
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const routes = require('./routes');
+const errorHandler = require('./middlewares/error-handler');
 
 const allowedCors = [
-  'http://sokolov172.nomoredomains.sbs',
-  'https://sokolov172.nomoredomains.sbs',
-  'http://api.sokolov172.nomoreparties.co',
-  'https://api.sokolov172.nomoreparties.co',
+  'http://sokolov172.nomoreparties.co',
+  'https://sokolov172.nomoreparties.co',
+  'http://api.sokolov171.nomoreparties.co',
+  'https://api.sokolov171.nomoreparties.co',
   'localhost:3000',
   'http://localhost',
   'http://localhost:3001',
@@ -32,6 +33,13 @@ const corsOptions = {
   credentials: true,
 };
 
+mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb');
+
+app.use(helmet());
+app.use(bodyParser.json());
+
+app.use(requestLogger);
+
 app.use(cors(corsOptions));
 
 app.get('/crash-test', () => {
@@ -40,16 +48,16 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
-app.use(requestLogger);
-
 app.use('/', routes);
+
+app.use((req, res, next) => {
+  next(new NotFound('Маршрут не найден'));
+});
 
 app.use(errorLogger);
 
 app.use(errors());
 app.use(errorHandler);
-
-mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb');
 
 app.listen(PORT, () => {
   console.log(PORT);
