@@ -4,9 +4,14 @@ const BadRequest = require('../errors/bad-request');
 const NotFound = require('../errors/not-found');
 const Forbidden = require('../errors/forbidden');
 
-const getAllMovies = (req, res, next) => {
-  Movie.find({})
+const getMovies = (req, res, next) => {
+  const owner = req.user._id;
+  
+  Movie.find({ owner })
     .then((movies) => {
+      if (!movies) {
+        next(new NotFound('Фильмы не найдены'));
+      }
       res.send(movies);
     })
     .catch(next);
@@ -58,7 +63,7 @@ const deleteMovie = (req, res, next) => {
 };
 
 module.exports = {
-  getAllMovies,
+  getMovies,
   createMovie,
   deleteMovie,
 };
