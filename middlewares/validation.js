@@ -5,10 +5,10 @@ const BadRequest = require('../errors/bad-request');
 
 const validationUrl = (url) => {
   const validate = isUrl(url);
-  if (validate) {
-    return url;
+  if (!validate) {
+    throw new BadRequest('Некорректный адрес URL');
   }
-  throw new BadRequest('Некорректный адрес URL');
+  return url;
 };
 
 const validateSignIn = () => celebrate({
