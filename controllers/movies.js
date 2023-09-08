@@ -5,9 +5,9 @@ const NotFound = require('../errors/not-found');
 const Forbidden = require('../errors/forbidden');
 
 const getMovies = (req, res, next) => {
-  const { _id } = req.user;
+  const owner = req.user._id;
 
-  Movie.find({ owner: _id })
+  Movie.find({ owner })
     .then((movies) => {
       if (!movies) {
         next(new NotFound('Фильмы не найдены'));
@@ -18,61 +18,37 @@ const getMovies = (req, res, next) => {
 };
 
 const createMovie = (req, res, next) => {
-  const {
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    thumbnail,
-    nameRU,
-    nameEN,
-    movieId,
-  } = req.body;
+  const owner = req.user._id;
 
-  const { _id } = req.user;
-
-  Movie.create({
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    thumbnail,
-    nameRU,
-    nameEN,
-    movieId,
-    owner: _id,
-  })
+  Movie.create({ owner, ...req.body })
     .then((movie) => {
       res.send(movie);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
         next(new BadRequest('Переданы некорректные данные'));
-        return;
+      } else {
+        next(error);
       }
-      next(error);
-    });
+    })
+    .catch(next);
 };
 
 const deleteMovie = (req, res, next) => {
-  Movie.findById(req.params.movieId)
+  const userId = req.user._id;
+  const { movieId } = req.params;
+
+  Movie.findById(movieId)
     .orFail(() => {
       throw new NotFound('Фильм с указанным _id не найден');
     })
     .then((movie) => {
-      if (req.user._id !== movie.owner._id.toString()) {
-        throw new Forbidden('Удаление запрещено');
+      if (movie.owner.toString() === userId) {
+        return Movie.findByIdAndRemove(movieId)
+          .then((deletedMovie) => res.send(deletedMovie))
+          .catch(next);
       }
-      return Movie.findByIdAndRemove(req.params.movieId);
-    })
-    .then((movie) => {
-      res.send(movie);
+      throw new Forbidden('Удаление запрещено');
     })
     .catch((error) => {
       if (error.name === 'CastError') {
