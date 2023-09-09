@@ -20,7 +20,7 @@ const validateSignIn = () => celebrate({
 
 const validateSignUp = () => celebrate({
   body: Joi.object().keys({
-    name: Joi.string(),
+    name: Joi.string().min(2).max(30).required(),
     email: Joi.string().required().email(),
     password: Joi.string().required(),
 
@@ -29,7 +29,7 @@ const validateSignUp = () => celebrate({
 
 const validationUpdateUser = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().required(),
+    name: Joi.string().required().min(2).max(30),
     email: Joi.string().required().email(),
   }),
 });
@@ -52,7 +52,7 @@ const validationCreateMovie = celebrate({
 
 const validationDeleteMovie = celebrate({
   params: Joi.object().keys({
-    movieId: Joi.string().hex(),
+    movieId: Joi.string().required().hex().length(24),
   }),
 });
 

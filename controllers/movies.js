@@ -6,7 +6,6 @@ const Forbidden = require('../errors/forbidden');
 
 const getMovies = (req, res, next) => {
   const owner = req.user._id;
-
   Movie.find({ owner })
     .then((movies) => {
       if (!movies) {
